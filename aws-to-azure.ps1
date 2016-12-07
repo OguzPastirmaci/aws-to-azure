@@ -1,9 +1,15 @@
 ﻿$ErrorActionPreference = "Stop"
 
+# AWS instance ID of the VM to be migrated
 $instance = ""
+# Azure subscription OD
 $subscriptionID = ""
+# Name of the resource group to be created in Azure
 $rgName = ""
+# Location of the VM in Azure
 $location = ""
+
+# Names of the storage account etc. to be created in Azure. Default is to use the computer name.
 $storageAccount = $env:computername.ToLower() -replace "\W"
 $containerName = $env:computername.ToLower()
 $localVHDName = $env:computername + ".vhd"
@@ -38,7 +44,7 @@ Set-DefaultAWSRegion -Region $AZ
 
 $cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone $AZ
 
-### Add a check here to make sure the status of the volume becomes available/created
+### TODO: Add a better check here to make sure the status of the volume becomes available/created
 
 Start-Sleep 10
 
@@ -47,7 +53,7 @@ $cloneVolumeID = $cloneVolume.VolumeId
 
 Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
-### Add a check here to make sure the status is attached
+### TODO: Add a check here to make sure the status is attached
 
 
 #####-----------------------------------IN THE VM-------------------------------------------------------
