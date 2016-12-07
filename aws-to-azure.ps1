@@ -2,7 +2,7 @@
 
 # AWS instance ID of the VM to be migrated
 $instance = ""
-# Azure subscription OD
+# Azure subscription ID
 $subscriptionID = ""
 # Name of the resource group to be created in Azure
 $rgName = ""
@@ -25,7 +25,7 @@ $vmSize = "Standard_DS3_v2"
 #------------------------------------AWS EC2--------------------------------------------------------
 
 # Get a collection of all volumes attached to the instance and choose /dev/sda1
-# The default volume in AWS is /dev/sda1, if you changed this on your VM, change the value here accordingly
+# The default boot volume in AWS is /dev/sda1, if you changed this on your VM, change the value here accordingly
 $volumes = @(Get-EC2volume) | ? { ($_.Attachments.InstanceId -eq $instance) -and ($_.attachment.device -eq "/dev/sda1")}
 
 # Get the volume's ID
@@ -55,6 +55,7 @@ Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
 ### TODO: Add a check here to make sure the status is attached
 
+Start-Sleep 10
 
 #-----------------------------------IN THE VM-------------------------------------------------------
 
@@ -93,7 +94,7 @@ $availableLetterForCloning = 67..90 | ForEach-Object { [string][char]$_ } |
 Get-Disk | Where partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle MBR -PassThru -AsJob | Wait-Job | Receive-Job | New-Partition -DriveLetter $availableLetterForCloning -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel “Migration” -Confirm:$false
 
 
-# Clone the drive/s with Disk2VHD. Change the drive/s if you're cloning any disk other than the C drive
+# Clone the drive/s with Disk2VHD. Change the drive/s if you're cloning any disk other than the C drive.
 $clonedDiskTarget = $availableLetterForCloning + $localVHDName
 $process = "disk2vhd.exe"
 $drive1 = "S:"
@@ -101,13 +102,12 @@ $drive2 = "C:"
 &$process $drive1 $drive2 $clonedDiskTarget "-accepteula" | echo "Waiting for the disk to be cloned"
 
 
-# Enter the location of your Azure profile file
+# Enter the location of your Azure profile file. If you don't have that file, run the following command: Save-AzureRmProfile -Path "c:\azureprofile.json"
 
-# Select-AzureRmProfile -Path "c:\azureprofile.json"
- 
-Select-AzureRmSubscription -SubscriptionId $subscriptionID
- 
-# Get-AzureRmStorageAccount
+Select-AzureRmProfile -Path "c:\azureprofile.json"
+
+# This is the alternative to the previous step. If you are already logged in to your Azure account in PowerShell, you can use this one:
+# Select-AzureRmSubscription -SubscriptionId $subscriptionID
 
 New-AzureRmResourceGroup -Name $rgName -Location $location
   
