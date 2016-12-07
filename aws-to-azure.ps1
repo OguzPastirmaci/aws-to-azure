@@ -22,7 +22,7 @@ $nsgName = "$vmName" + "-Nsg"
 $vmSize = "Standard_DS3_v2"
 
 
-#####------------------------------------AWS EC2--------------------------------------------------------
+#------------------------------------AWS EC2--------------------------------------------------------
 
 # Get a collection of all volumes attached to the instance and choose /dev/sda1
 # The default volume in AWS is /dev/sda1, if you changed this on your VM, change the value here accordingly
@@ -56,7 +56,7 @@ Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 ### TODO: Add a check here to make sure the status is attached
 
 
-#####-----------------------------------IN THE VM-------------------------------------------------------
+#-----------------------------------IN THE VM-------------------------------------------------------
 
 # Get the first unused letter to assing to the new disk
 $usedLetters  = Get-PSDrive | Select-Object -Expand Name |
