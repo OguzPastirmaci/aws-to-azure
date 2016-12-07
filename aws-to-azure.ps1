@@ -37,7 +37,7 @@ $volumeSize = $volumes | % { $_.Size}
 # Get the availability zone of the volume
 $AZ = (Get-EC2volume -VolumeId $volumeName).AvailabilityZone
 
-# Setting the region for EC2 Run Command
+# Set the default AWS region to volume's region
 Set-DefaultAWSRegion -Region $AZ
 
 # Create a new volume with the same size of the boot volume in the same availability zone
@@ -46,7 +46,7 @@ $cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone
 
 ### TODO: Add a better check here to make sure the status of the volume becomes available/created
 
-Start-Sleep 10
+Start-Sleep 30
 
 # Attach the created volume to the VM
 $cloneVolumeID = $cloneVolume.VolumeId
@@ -55,7 +55,7 @@ Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
 ### TODO: Add a check here to make sure the status is attached
 
-Start-Sleep 10
+Start-Sleep 30
 
 #-----------------------------------IN THE VM-------------------------------------------------------
 
@@ -66,7 +66,7 @@ $availableLetterForReservedVolume = 67..90 | ForEach-Object { [string][char]$_ }
          Where-Object { $usedLetters -notcontains $_ } |
          Select-Object -First 1
 
-# Add System Reserved volume as a drive with diskpart (that's necessary for the VM to be able to boot)
+# Add System Reserved volume as a drive with diskpart (that's necessary for the VM to be able to boot, not necessary for data volumes)
 New-Item -Name addReservedVolume.txt -ItemType file -force | OUT-NULL
 Add-Content -Path addReservedVolume.txt “sel disk 0”
 Add-Content -Path addReservedVolume.txt “sel part 1”
@@ -95,6 +95,7 @@ Get-Disk | Where partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle 
 
 
 # Clone the drive/s with Disk2VHD. Change the drive/s if you're cloning any disk other than the C drive.
+# Reminder: The script and the disk2vhd.exe should be in the same directory by default.
 $clonedDiskTarget = $availableLetterForCloning + $localVHDName
 $process = "disk2vhd.exe"
 $drive1 = "S:"
@@ -103,7 +104,6 @@ $drive2 = "C:"
 
 
 # Enter the location of your Azure profile file. If you don't have that file, run the following command: Save-AzureRmProfile -Path "c:\azureprofile.json"
-
 Select-AzureRmProfile -Path "c:\azureprofile.json"
 
 # This is the alternative to the previous step. If you are already logged in to your Azure account in PowerShell, you can use this one:
