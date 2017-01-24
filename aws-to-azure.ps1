@@ -33,17 +33,14 @@ $volumes = @(Get-EC2volume) | ? { ($_.Attachments.InstanceId -eq $instance) -and
 # Get the volume's ID
 $volumeName = $volumes | % { $_.VolumeId}
 
-# Get the volume's size
+# Get the volume's size and add 5 for some buffer
 $volumeSize = $volumes | % { $_.Size}
 
 # Get the availability zone of the volume
 $AZ = (Get-EC2volume -VolumeId $volumeName).AvailabilityZone
 
-# Set the default AWS region to volume's region
-Set-DefaultAWSRegion -Region $AZ
-
 # Create a new volume with the same size of the boot volume in the same availability zone
-$cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone $AZ
+$cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone "$AZ"
 
 ### TODO: Add a better check here to make sure the status of the volume becomes available/created
 Start-Sleep 30
@@ -72,12 +69,6 @@ Add-Content -Path addReservedVolume.txt “sel part 1”
 Add-Content -Path addReservedVolume.txt “assign letter=$availableLetterForReservedVolume noerr”
 $addReservedVolume=(diskpart /s addReservedVolume.txt) | Out-Null
 
-# Remove the System Reserved volume as a drive with diskpart
-New-Item -Name removeReservedVolume.txt -ItemType file -force | OUT-NULL
-Add-Content -Path removeReservedVolume.txt “sel disk 0”
-Add-Content -Path removeReservedVolume.txt “sel part 1”
-Add-Content -Path removeReservedVolume.txt “remove letter=$availableLetterForReservedVolume noerr”
-$removeReservedVolume=(diskpart /s removeReservedVolume.txt) | Out-Null
 
 # Get the first unused letter to assing to the new disk that we'll put the cloned VHD into
 $usedLetters  = Get-PSDrive | Select-Object -Expand Name |
@@ -87,25 +78,30 @@ $availableLetterForCloning = 67..90 | ForEach-Object { [string][char]$_ } |
          Select-Object -First 1
 
 # Get the newly added disk and create a new partition 
-Get-Disk | Where partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle MBR -PassThru -AsJob | Wait-Job | Receive-Job | New-Partition -DriveLetter $availableLetterForCloning -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel “Migration” -Confirm:$false
+Get-Disk | Where partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle MBR -PassThru -AsJob | Wait-Job | Receive-Job | New-Partition -DriveLetter $availableLetterForCloning -UseMaximumSize
+
+Format-Volume -DriveLetter $availableLetterForCloning -FileSystem NTFS -NewFileSystemLabel “Migration” -Confirm:$false
 
 # Clone the drive/s with Disk2VHD. Change the drive/s if you're cloning any disk other than the C drive.
 # Reminder: The script and the disk2vhd.exe should be in the same directory by default.
-$clonedDiskTarget = $availableLetterForCloning + $localVHDName
-$process = "disk2vhd.exe"
-$drive1 = "S:"
+$clonedDiskTarget = $availableLetterForCloning + ":\" + $localVHDName
+$process = "C:\test\disk2vhd.exe"
+$drive1 = "$availableLetterForReservedVolume" + ":"
 $drive2 = "C:"
 &$process $drive1 $drive2 $clonedDiskTarget "-accepteula" | echo "Waiting for the disk to be cloned"
 
-# Enter the location of your Azure profile file. If you don't have that file, run the following command: Save-AzureRmProfile -Path "c:\azureprofile.json"
+# Remove the System Reserved volume as a drive with diskpart
+New-Item -Name removeReservedVolume.txt -ItemType file -force | OUT-NULL
+Add-Content -Path removeReservedVolume.txt “sel disk 0”
+Add-Content -Path removeReservedVolume.txt “sel part 1”
+Add-Content -Path removeReservedVolume.txt “remove letter=$availableLetterForReservedVolume noerr”
+$removeReservedVolume=(diskpart /s removeReservedVolume.txt) | Out-Null
+
+# Enter the location of your Azure profile file. If you don't have that file, run the following command after logging in: Save-AzureRmProfile -Path "c:\azureprofile.json"
 Select-AzureRmProfile -Path "c:\azureprofile.json"
 
-# An alternative to the previous step: If you are already logged in to your Azure account in PowerShell, you can use this one:
-# Select-AzureRmSubscription -SubscriptionId $subscriptionID
-New-AzureRmResourceGroup -Name $rgName -Location $location
-  
 New-AzureRmStorageAccount -ResourceGroupName $rgName -Name $storageAccount -Location $location -SkuName "Standard_LRS" -Kind "Storage"
- 
+
 # Upload the VHD
 $osDiskUri = "https://$storageAccount.blob.core.windows.net/$containerName/$localVHDName"
  
