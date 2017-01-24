@@ -100,6 +100,10 @@ $removeReservedVolume=(diskpart /s removeReservedVolume.txt) | Out-Null
 # Enter the location of your Azure profile file. If you don't have that file, run the following command after logging in: Save-AzureRmProfile -Path "c:\azureprofile.json"
 Select-AzureRmProfile -Path "c:\azureprofile.json"
 
+# Create a new Resource Group in Azure
+New-AzureRmResourceGroup -Name $rgName -Location $location
+
+# Create a new Storage Account in Azure
 New-AzureRmStorageAccount -ResourceGroupName $rgName -Name $storageAccount -Location $location -SkuName "Standard_LRS" -Kind "Storage"
 
 # Upload the VHD
