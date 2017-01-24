@@ -1,7 +1,7 @@
 # aws-to-azure
 The script will create a clone of the AWS Windows VM in Azure. Much of the process like creating a new volume in AWS and attaching it to the VM etc. is automated using AWS Tool for PowerShell, so once you enter the info in the script it should create the clone automatically.
 
-This is not a supported way to migrate from AWS to Azure but it's handy if you want to quickly test your existing AWS Windows VMs on Azure.
+This is not a supported way to migrate from AWS to Azure but it's handy if you want to quickly test your existing AWS Windows VMs on Azure. Use it at your own risk.
 
 If you need a supported way that would handle large amount of migrations, take a look at [Azure Site Recovery](https://azure.microsoft.com/en-us/services/site-recovery/) service.
 
