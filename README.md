@@ -7,3 +7,5 @@ Pre-requisites:
 - [Disk2VHD](https://technet.microsoft.com/en-us/sysinternals/ee656415.aspx) is downloaded and put in the same directory with the script (can be changed inside the script if needed)
 - Azure subscription data is exported to a file using Save-AzureRmProfile. Default location to put this file is the C:\ drive. Can be changed inside the script if needed.
 
+Check the issues to help with enhancements.
+
