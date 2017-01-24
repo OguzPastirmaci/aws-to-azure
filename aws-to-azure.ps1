@@ -41,11 +41,9 @@ $AZ = (Get-EC2volume -VolumeId $volumeName).AvailabilityZone
 Set-DefaultAWSRegion -Region $AZ
 
 # Create a new volume with the same size of the boot volume in the same availability zone
-
 $cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone $AZ
 
 ### TODO: Add a better check here to make sure the status of the volume becomes available/created
-
 Start-Sleep 30
 
 # Attach the created volume to the VM
@@ -54,7 +52,6 @@ $cloneVolumeID = $cloneVolume.VolumeId
 Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
 ### TODO: Add a check here to make sure the status is attached
-
 Start-Sleep 30
 
 #-----------------------------------IN THE VM-------------------------------------------------------
@@ -108,47 +105,38 @@ Select-AzureRmProfile -Path "c:\azureprofile.json"
 
 # This is the alternative to the previous step. If you are already logged in to your Azure account in PowerShell, you can use this one:
 # Select-AzureRmSubscription -SubscriptionId $subscriptionID
-
 New-AzureRmResourceGroup -Name $rgName -Location $location
   
 New-AzureRmStorageAccount -ResourceGroupName $rgName -Name $storageAccount -Location $location -SkuName "Standard_LRS" -Kind "Storage"
  
  
 # Upload the VHD
- 
 $osDiskUri = "https://$storageAccount.blob.core.windows.net/$containerName/$localVHDName"
  
 Add-AzureRmVhd -ResourceGroupName $rgName -Destination $osDiskUri -LocalFilePath $clonedDiskTarget
 
 # Create the subnet
-
 $singleSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $subnetName -AddressPrefix 10.0.0.0/24
  
 # Create the Vnet
-
 $vnet = New-AzureRmVirtualNetwork -Name $vnetName -ResourceGroupName $rgName -Location $location -AddressPrefix 10.0.0.0/16 -Subnet $singleSubnet
  
 # Create a public IP & NIC
-
 $pip = New-AzureRmPublicIpAddress -Name $ipName -ResourceGroupName $rgName -DomainNameLabel $vmName -Location $location -AllocationMethod Dynamic
 $nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $rgName -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id
  
 # Create NSG and add RDP rule
- 
 $rdpRule = New-AzureRmNetworkSecurityRuleConfig -Name RDP -Description "Allow RDP" -Access Allow -Protocol Tcp -Direction Inbound -Priority 110 -SourceAddressPrefix Internet -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 3389
  
 $nsg = New-AzureRmNetworkSecurityGroup -ResourceGroupName $rgName -Location $location -Name $nsgName -SecurityRules $rdpRule
   
-
 # Set the VM name and size
- 
 $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
  
 # Add the NIC
 $vm = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $nic.Id
  
 # Add the OS disk by using the URL of the copied OS VHD
-
 $osDiskName = $vmName + "osDisk"
 $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption attach -Windows
 
