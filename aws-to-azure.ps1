@@ -42,16 +42,20 @@ $AZ = (Get-EC2volume -VolumeId $volumeName).AvailabilityZone
 # Create a new volume with the same size of the boot volume in the same availability zone
 $cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone "$AZ"
 
-### TODO: Add a better check here to make sure the status of the volume becomes available/created
-Start-Sleep 30
+# Wait for the volume creation to complete
+while ((Get-EC2Volume -VolumeId $cloneVolume.VolumeId).State -ne "available") {
+  sleep 3
+}
 
 # Attach the created volume to the VM
 $cloneVolumeID = $cloneVolume.VolumeId
 
 Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
-### TODO: Add a check here to make sure the status is attached
-Start-Sleep 30
+# Wait for the volume to be attached
+while ((Get-EC2Volume -VolumeId $cloneVolume.VolumeId).State -ne "in-use") {
+  sleep 3
+}
 
 #-----------------------------------IN THE VM-------------------------------------------------------
 
