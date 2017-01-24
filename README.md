@@ -13,5 +13,5 @@ Make the necessary changes for the variables in the script, start a PowerShell p
 
 **Contributing**
 
-Check the issues to help with enhancements.
+Feel free to check the open issues labeled as enhancements and help with them or create PRs.
 
