@@ -10,6 +10,7 @@ If you need a supported way that would handle large amount of migrations, take a
 - [AWS Tools for PowerShell](https://aws.amazon.com/powershell/) is installed and initialized in the VM that will be migrated.
 - [Disk2VHD](https://technet.microsoft.com/en-us/sysinternals/ee656415.aspx) is downloaded and put in the same directory with the script (directory can be changed inside the script if needed).
 - Azure subscription data is exported to a file using Save-AzureRmProfile. Default location to put this file is the C:\ drive. Can be changed inside the script if needed.
+- The security group of the Windows VM in AWS should allow traffic to TCP 80/443 for uploading the VHD to Azure Storage.
 
 **Usage**
 
