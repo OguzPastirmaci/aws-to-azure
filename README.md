@@ -12,5 +12,6 @@ Migration script to automate moving a Windows VM from AWS to Azure
 Make the necessary changes for the variables in the script, start a PowerShell prompt as an administrator, and run the script.
 
 **Contributing**
+
 Check the issues to help with enhancements.
 
