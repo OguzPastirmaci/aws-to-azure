@@ -9,7 +9,7 @@ The script will create a clone of the AWS Windows VM in Azure. Much of the proce
 
 **Usage**
 
-Make the necessary changes for the variables in the script, start a PowerShell prompt as an administrator, and run the script.
+Make the necessary changes for the variables in the script, start a PowerShell prompt as an administrator in the AWS Windows VM you want to create a clone in Azure, and run the script.
 
 **Contributing**
 
