@@ -1,5 +1,5 @@
 # aws-to-azure
-The script will create a clone of the AWS Windows VM in Azure. Much of the process like creating a new volume in AWS and attaching it to the VM etc. is automated using AWS Tool for PowerShell, so once you enter the info in the script it should create the clone without further 
+The script will create a clone of the AWS Windows VM in Azure. Much of the process like creating a new volume in AWS and attaching it to the VM etc. is automated using AWS Tool for PowerShell, so once you enter the info in the script it should create the clone automatically.
 
 **Pre-requisites**
 
