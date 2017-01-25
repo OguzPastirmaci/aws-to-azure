@@ -142,3 +142,17 @@ $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOp
 
 # Create the new VM
 New-AzureRmVM -ResourceGroupName $rgName -Location $location -VM $vm
+
+
+# The following part can be used to automatically detach and delete the volume used for cloning. NOT enabled by default.
+
+<# Detach the volume used for cloning the VM
+Dismount-EC2Volume -VolumeId $cloneVolumeID -InstanceId $instance -Device xvdp
+
+# Wait for the dismount to complete
+while ((Get-EC2Volume -VolumeId $cloneVolumeID).State -ne "available") {
+  sleep 3
+}
+# Remove the volume used for cloning
+Remove-EC2Volume -VolumeId $cloneVolumeID
+#>
