@@ -28,13 +28,13 @@ $vmSize = "Standard_DS3_v2"
 
 # Get a collection of all volumes attached to the instance and choose /dev/sda1
 # The default boot volume in AWS is /dev/sda1, if you changed this on your VM, change the value here accordingly
-$volumes = @(Get-EC2volume) | ? { ($_.Attachments.InstanceId -eq $instance) -and ($_.attachment.device -eq "/dev/sda1")}
+$volumes = @(Get-EC2volume) | Where-Object { ($_.Attachments.InstanceId -eq $instance) -and ($_.attachment.device -eq "/dev/sda1")}
 
 # Get the volume's ID
-$volumeName = $volumes | % { $_.VolumeId}
+$volumeName = $volumes | ForEach-Object { $_.VolumeId}
 
 # Get the volume's size and add 5 for some buffer
-$volumeSize = $volumes | % { $_.Size}
+$volumeSize = $volumes | ForEach-Object { $_.Size}
 
 # Get the availability zone of the volume
 $AZ = (Get-EC2volume -VolumeId $volumeName).AvailabilityZone
@@ -44,7 +44,7 @@ $cloneVolume = New-EC2Volume -Size $volumeSize -VolumeType gp2 -AvailabilityZone
 
 # Wait for the volume creation to complete
 while ((Get-EC2Volume -VolumeId $cloneVolume.VolumeId).State -ne "available") {
-  sleep 3
+  Start-Sleep 3
 }
 
 # Attach the created volume to the VM
@@ -54,7 +54,7 @@ Add-EC2Volume -InstanceId $instance -VolumeId $cloneVolumeID -Device xvdp -Force
 
 # Wait for the volume to be attached
 while ((Get-EC2Volume -VolumeId $cloneVolume.VolumeId).State -ne "in-use") {
-  sleep 3
+  Start-Sleep 3
 }
 
 #-----------------------------------IN THE VM-------------------------------------------------------
@@ -82,7 +82,7 @@ $availableLetterForCloning = 67..90 | ForEach-Object { [string][char]$_ } |
          Select-Object -First 1
 
 # Get the newly added disk and create a new partition 
-Get-Disk | Where partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle MBR -PassThru -AsJob | Wait-Job | Receive-Job | New-Partition -DriveLetter $availableLetterForCloning -UseMaximumSize
+Get-Disk | Where-Object partitionstyle -eq ‘raw’ | Initialize-Disk -PartitionStyle MBR -PassThru -AsJob | Wait-Job | Receive-Job | New-Partition -DriveLetter $availableLetterForCloning -UseMaximumSize
 
 Format-Volume -DriveLetter $availableLetterForCloning -FileSystem NTFS -NewFileSystemLabel “Migration” -Confirm:$false
 
@@ -92,7 +92,7 @@ $clonedDiskTarget = $availableLetterForCloning + ":\" + $localVHDName
 $process = "C:\test\disk2vhd.exe"
 $drive1 = "$availableLetterForReservedVolume" + ":"
 $drive2 = "C:"
-&$process $drive1 $drive2 $clonedDiskTarget "-accepteula" | echo "Waiting for the disk to be cloned"
+&$process $drive1 $drive2 $clonedDiskTarget "-accepteula" | Write-Output "Waiting for the disk to be cloned"
 
 # Remove the System Reserved volume as a drive with diskpart
 New-Item -Name removeReservedVolume.txt -ItemType file -force | OUT-NULL
@@ -151,7 +151,7 @@ Dismount-EC2Volume -VolumeId $cloneVolumeID -InstanceId $instance -Device xvdp
 
 # Wait for the dismount to complete
 while ((Get-EC2Volume -VolumeId $cloneVolumeID).State -ne "available") {
-  sleep 3
+  Start-Sleep 3
 }
 # Remove the volume used for cloning
 Remove-EC2Volume -VolumeId $cloneVolumeID
