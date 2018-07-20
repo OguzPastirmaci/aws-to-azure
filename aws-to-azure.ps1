@@ -23,7 +23,6 @@ $nsgName = "$vmName" + "-Nsg"
 # The default value for the VM size is DS3 v2. Change this to something similar to your VM's size in AWS. More info on Azure VM sizes: https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes
 $vmSize = "Standard_DS3_v2"
 
-
 #------------------------------------AWS EC2--------------------------------------------------------
 
 # Get a collection of all volumes attached to the instance and choose /dev/sda1
